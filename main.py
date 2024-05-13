@@ -3,77 +3,98 @@ import random
 
 pygame.init()
 
+# Завантаження звуків
+crash_sound = pygame.mixer.Sound('fall.wav')  # Звук при зіткненні
+pygame.mixer.music.load('music.mp3')  # Музика під час гри
+
 class Player():
-    def __init__(self, x, y, width, height, image):
-        # Ініціалізація гравця
-        self.original_image = pygame.image.load(image)  # Завантаження зображення гравця
-        self.image = pygame.transform.scale(self.original_image, (width, height))  # Зміна розміру зображення
-        self.rect = self.image.get_rect()  # Отримання прямокутника, обведеного навколо зображення
-        self.rect.x = x  # Встановлення початкової позиції гравця по горизонталі
-        self.rect.y = y  # Встановлення початкової позиції гравця по вертикалі
-        self.width = width  # Ширина гравця
-        self.height = height  # Висота гравця
-        self.lives = 3  # Кількість життів гравця
+    def __init__(self, x, y, width, height, frames):
+        self.frames = frames  
+        self.index = 0  
+        self.image = self.frames[self.index]  
+        self.rect = self.image.get_rect()  
+        self.rect.x = x  
+        self.rect.y = y  
+        self.width = width  
+        self.height = height  
+        self.lives = 3  
+
+    def update_animation(self):
+        self.index += 0.1  
+        if self.index >= len(self.frames):
+            self.index = 0
+        self.image = self.frames[int(self.index)]
 
 # Встановлення розмірів вікна та FPS
 WIDTH, HEIGHT = 700, 600
 FPS = 60
-background_image = pygame.image.load('background.png')  # Завантаження зображення тла
-background_image = pygame.transform.scale(background_image, (WIDTH, HEIGHT))  # Зміна розміру зображення тла
+background_image = pygame.image.load('background.png')  
+background_image = pygame.transform.scale(background_image, (WIDTH, HEIGHT))  
 
-window = pygame.display.set_mode((WIDTH, HEIGHT))  # Створення вікна гри з встановленими розмірами
-clock = pygame.time.Clock()  # Створення годинника для обмеження частоти кадрів
+window = pygame.display.set_mode((WIDTH, HEIGHT))  
+clock = pygame.time.Clock()  
 
-font = pygame.font.Font(None, 36)  # Створення шрифту для тексту
-text_lives = font.render("Життя: ", True, (0,0,0))  # Створення тексту для відображення кількості життів
+font = pygame.font.Font(None, 36)  
 
-# Змінні для лічильника очок
+# Відображення кількості життів
+text_lives_position = (10, 10)
+player_lives = 3
+
+# Відображення кількості очок
+text_score_position = (10, 560)
 score = 0
-font_score = pygame.font.Font(None, 36)  # Створення шрифту для лічильника очок
-text_score = font_score.render("Очки: " + str(score), True, (0,0,0))  # Створення тексту для відображення кількості очок
 
-# Початкові координати гравця
+# Функція для відображення тексту
+def display_text(text, position):
+    text_surface = font.render(text, True, (0,0,0))
+    window.blit(text_surface, position)
+
 py, sy, ay = HEIGHT // 2, 0, 0
-player = Player(50, 50, 50, 50, "bird.png")  # Створення об'єкта гравця з заданими параметрами
 
-state = 'start'  # Початковий стан гри
-timer = 10  # Лічильник часу до початку гри
-pipes = []  # Список труб
-play = True  # Флаг, що вказує на те, чи триває гра
+bird_image = pygame.image.load('bird.png')
+frame_width = bird_image.get_width() // 4  
+frame_height = bird_image.get_height()
+bird_frames = [bird_image.subsurface(pygame.Rect(i * frame_width, 0, frame_width, frame_height)) for i in range(4)]
 
-# Функція для створення нової пари труб
+player = Player(50, 50, 50, 50, bird_frames)
+
+state = 'start'  
+timer = 10  
+pipes = []  
+play = True  
+
 def create_pipe():
-    gap = 200  # Відстань між верхньою та нижньою трубою
-    pipe_height = random.randint(50, HEIGHT - gap - 50)  # Випадкова висота верхньої труби
-    pipe_top_height = pipe_height  # Висота верхньої труби
-    pipe_bottom_height = HEIGHT - pipe_height - gap  # Висота нижньої труби
+    gap = 200  
+    pipe_height = random.randint(50, HEIGHT - gap - 50)  
+    pipe_top_height = pipe_height  
+    pipe_bottom_height = HEIGHT - pipe_height - gap  
 
-    # Завантаження зображень труб та зміна їх розмірів
     pipe_top_image = pygame.image.load('pipe_top.png')
     pipe_bottom_image = pygame.image.load('pipe_bottom.png')
     pipe_top_image = pygame.transform.scale(pipe_top_image, (50, pipe_top_height))
     pipe_bottom_image = pygame.transform.scale(pipe_bottom_image, (50, pipe_bottom_height))
 
-    # Встановлення початкової позиції труб
     pipe_top_rect = pipe_top_image.get_rect(topleft=(WIDTH, 0))
     pipe_bottom_rect = pipe_bottom_image.get_rect(topleft=(WIDTH, pipe_top_height + gap))
 
-    return pipe_top_image, pipe_bottom_image, pipe_top_rect, pipe_bottom_rect  # Повернення пари труб
+    return pipe_top_image, pipe_bottom_image, pipe_top_rect, pipe_bottom_rect  
 
-# Основний цикл гри
 while play:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             play = False
 
-    window.blit(background_image, (0, 0))  # Відображення тла
-    window.blit(player.image, (player.rect.x, player.rect.y))  # Відображення гравця
-    text_lives_display = font.render("Життя: " + str(player.lives), True, (0,0,0))  # Створення тексту для відображення кількості життів
-    window.blit(text_lives_display, (10, 560))  # Відображення тексту про життя
+    window.blit(background_image, (0, 0))  
+    
+    for pipe_top, pipe_bottom, pipe_top_rect, pipe_bottom_rect in pipes:
+        window.blit(pipe_top, (pipe_top_rect.x, pipe_top_rect.y))
+        window.blit(pipe_bottom, (pipe_bottom_rect.x, pipe_bottom_rect.y))
 
-    # Відображення лічильника очок
-    text_score = font_score.render("Очки: " + str(score), True, (0,0,0))
-    window.blit(text_score, (10, 10))
+    window.blit(player.image, (player.rect.x, player.rect.y))  
+    
+    # Відображення кількості життів та очок
+    display_text("Життя: " + str(player.lives), text_lives_position)  
+    display_text("Очки: " + str(score), text_score_position)  
 
     press = pygame.mouse.get_pressed()
     keys = pygame.key.get_pressed()
@@ -82,7 +103,6 @@ while play:
     if timer > 0:
         timer -= 1
 
-    # Обробка труб
     for pipe_pair in pipes:
         pipe_top, pipe_bottom, pipe_top_rect, pipe_bottom_rect = pipe_pair
         pipe_top_rect.x -= 3
@@ -90,10 +110,10 @@ while play:
         if pipe_top_rect.right < 0:
             pipes.remove(pipe_pair)
 
-    # Логіка гри
     if state == 'start':
         if click and timer == 0 and len(pipes) == 0:
             state = 'play'
+            pygame.mixer.music.play(-1)  # Початок програвання музики
         py += (HEIGHT // 2 - py) * 0.1
         player.rect.y = py
     elif state == 'play':
@@ -117,6 +137,7 @@ while play:
         for pipe_top, pipe_bottom, pipe_top_rect, pipe_bottom_rect in pipes:
             if player.rect.colliderect(pipe_top_rect) or player.rect.colliderect(pipe_bottom_rect):
                 player.lives -= 1
+                crash_sound.play()  # Відтворення звуку зіткнення
                 if player.lives == 0:
                     play = False
                 else:
@@ -126,23 +147,18 @@ while play:
     else:
         pass
 
-    # Лічильник очок
     if state == 'play':
         for pipe_top, pipe_bottom, pipe_top_rect, pipe_bottom_rect in pipes:
             if pipe_top_rect.right < player.rect.x and pipe_top_rect.right > 0 and pipe_top_rect.right < WIDTH // 2 and pipe_top_rect.right > player.rect.x - 3:
                 score += 10
 
-    # Видалення труб, які знаходяться перед екраном, коли гра ще не закінчилася
     if state != 'start':
         pipes = [pipe_pair for pipe_pair in pipes if pipe_pair[2].right > 0]
 
-    # Відображення труб
-    for pipe_top, pipe_bottom, pipe_top_rect, pipe_bottom_rect in pipes:
-        window.blit(pipe_top, (pipe_top_rect.x, pipe_top_rect.y))
-        window.blit(pipe_bottom, (pipe_bottom_rect.x, pipe_bottom_rect.y))
+    player.update_animation()
 
-    pygame.display.update()  # Оновлення екрану
-    clock.tick(FPS)  # Обмеження кадрів за секунду
+    pygame.display.update()  
+    clock.tick(FPS)
 
-pygame.quit()  # Завершення гри
+pygame.quit()  
 
