@@ -3,10 +3,6 @@ import random
 
 pygame.init()
 
-# Завантаження звуків
-crash_sound = pygame.mixer.Sound('fall.wav')  # Звук при зіткненні
-pygame.mixer.music.load('music.mp3')  # Музика під час гри
-
 class Player():
     def __init__(self, x, y, width, height, frames):
         self.frames = frames  
@@ -18,12 +14,21 @@ class Player():
         self.width = width  
         self.height = height  
         self.lives = 3  
+        self.rotation_angle = 0  # Початковий кут нахилу
 
-    def update_animation(self):
+    def update_animation(self, velocity):
         self.index += 0.1  
         if self.index >= len(self.frames):
             self.index = 0
         self.image = self.frames[int(self.index)]
+        
+        if velocity != 0:  # Перевірка, чи пташка летить
+            # Застосування нахилу пташки вперед залежно від швидкості
+            self.rotation_angle = min(max(-30, velocity * -2), 30)  # Кут нахилу пташки
+        else:
+            self.rotation_angle = 0  # Якщо не летить, нахил = 0
+
+        self.image = pygame.transform.rotate(self.image, self.rotation_angle)
 
 # Встановлення розмірів вікна та FPS
 WIDTH, HEIGHT = 700, 600
@@ -79,6 +84,10 @@ def create_pipe():
 
     return pipe_top_image, pipe_bottom_image, pipe_top_rect, pipe_bottom_rect  
 
+# Додавання музики
+pygame.mixer.music.load('music.mp3')  # Музика під час гри
+pygame.mixer.music.play(-1)  # Запуск музики з постійним повторенням
+
 while play:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -113,7 +122,6 @@ while play:
     if state == 'start':
         if click and timer == 0 and len(pipes) == 0:
             state = 'play'
-            pygame.mixer.music.play(-1)  # Початок програвання музики
         py += (HEIGHT // 2 - py) * 0.1
         player.rect.y = py
     elif state == 'play':
@@ -137,7 +145,6 @@ while play:
         for pipe_top, pipe_bottom, pipe_top_rect, pipe_bottom_rect in pipes:
             if player.rect.colliderect(pipe_top_rect) or player.rect.colliderect(pipe_bottom_rect):
                 player.lives -= 1
-                crash_sound.play()  # Відтворення звуку зіткнення
                 if player.lives == 0:
                     play = False
                 else:
@@ -155,10 +162,11 @@ while play:
     if state != 'start':
         pipes = [pipe_pair for pipe_pair in pipes if pipe_pair[2].right > 0]
 
-    player.update_animation()
+    player.update_animation(sy)  # Передача швидкості польоту для визначення нахилу пташки
 
     pygame.display.update()  
     clock.tick(FPS)
 
 pygame.quit()  
+
 
