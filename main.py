@@ -99,6 +99,13 @@ pygame.mixer.music.play(-1)  # Запуск музики з постійним �
 # Додавання звуку при втраті життя
 fall_sound = pygame.mixer.Sound('fall.wav')
 
+# Завантаження зображення шестеренки
+gear_image = pygame.image.load('download.png')
+scaled_gear_width = 40  # Нова ширина зображення
+scaled_gear_height = 40  # Нова висота зображення
+gear_image = pygame.transform.scale(gear_image, (scaled_gear_width, scaled_gear_height))
+gear_position = (10, 10)  # Координати зображення
+
 # Функція для відображення кнопки
 def draw_button(text, position, font, color, bgcolor):
     text_surface = font.render(text, True, color)
@@ -133,6 +140,9 @@ while play:
         display_text("Flappy Bird", (WIDTH // 2, HEIGHT // 4), title_font, (255, 255, 255))
         start_button = draw_button("Почати гру", (WIDTH // 2, HEIGHT // 2), button_font, (255, 255, 255), (0, 0, 0))
         quit_button = draw_button("Вийти", (WIDTH // 2, HEIGHT // 2 + 100), button_font, (255, 255, 255), (0, 0, 0))
+        
+        # Зображення шестеренки
+        window.blit(gear_image, gear_position)
 
     else:
         for pipe_top, pipe_bottom, pipe_top_rect, pipe_bottom_rect in pipes:
