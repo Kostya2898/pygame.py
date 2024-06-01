@@ -3,31 +3,34 @@ import random
 
 pygame.init()
 
+# Клас для гравця
 class Player():
     def __init__(self, x, y, width, height, frames):
-        self.frames = frames  
-        self.index = 0  
-        self.image = self.frames[self.index]  
-        self.rect = self.image.get_rect()  
-        self.rect.x = x  
-        self.rect.y = y  
-        self.width = width  
-        self.height = height  
-        self.lives = 3  
-        self.rotation_angle = 0
+        self.frames = frames  # Список кадрів анімації пташки
+        self.index = 0  # Поточний індекс кадру анімації
+        self.image = self.frames[self.index]  # Зображення поточного кадру
+        self.rect = self.image.get_rect()  # Прямокутник, який оточує пташку
+        self.rect.x = x  # Початкове положення по осі X
+        self.rect.y = y  # Початкове положення по осі Y
+        self.width = width  # Ширина пташки
+        self.height = height  # Висота пташки
+        self.lives = 3  # Кількість життів гравця
+        self.rotation_angle = 0  # Кут повороту пташки
+        self.sensitivity = 50  # Початкове значення чутливості пташки
 
+    # Функція оновлення анімації пташки
     def update_animation(self, velocity):
-        self.index += 0.1  
+        self.index += 0.1  # Зміна індексу анімації
         if self.index >= len(self.frames):
             self.index = 0
-        self.image = self.frames[int(self.index)]
+        self.image = self.frames[int(self.index)]  # Оновлення зображення анімації
         
         if velocity != 0:
-            self.rotation_angle = min(max(-30, velocity * -2), 30)
+            self.rotation_angle = min(max(-30, velocity * -2), 30)  # Обчислення кута повороту
         else:
             self.rotation_angle = 0
 
-        self.image = pygame.transform.rotate(self.image, self.rotation_angle)
+        self.image = pygame.transform.rotate(self.image, self.rotation_angle)  # Поворот зображення
 
 # Встановлення розмірів вікна та FPS
 WIDTH, HEIGHT = 700, 600
@@ -40,6 +43,7 @@ pygame.display.set_icon(icon_image)
 # Встановлення заголовка вікна гри
 pygame.display.set_caption("Flappy Bird")
 
+# Завантаження фонового зображення
 background_image = pygame.image.load('background.png')  
 background_image = pygame.transform.scale(background_image, (WIDTH, HEIGHT))  
 
@@ -75,6 +79,7 @@ timer = 10
 pipes = []  
 play = True  
 
+# Функція для створення труб
 def create_pipe():
     gap = 200  
     pipe_height = random.randint(50, HEIGHT - gap - 50)  
@@ -124,16 +129,6 @@ while play:
         if event.type == pygame.MOUSEBUTTONDOWN:
             if state == 'menu':
                 mouse_pos = event.pos
-                if start_button.collidepoint(mouse_pos):
-                    state = 'start'
-                    player.lives = 3
-                    score = 0
-                    timer = 10
-                    pipes = []
-                    py, sy, ay = HEIGHT // 2, 0, 0
-                    player.rect.y = py
-                if quit_button.collidepoint(mouse_pos):
-                    play = False
                 if gear_rect.collidepoint(mouse_pos):
                     state = 'settings'
             elif state == 'settings':
@@ -158,7 +153,19 @@ while play:
         button_font = pygame.font.Font(None, 50)
         display_text("Налаштування", (150, 10), title_font, (255, 255, 255))
         back_button = draw_button("Назад", (WIDTH // 2, HEIGHT // 2 + 100), button_font, (255, 255, 255), (0, 0, 0))
-    
+        
+        # Відображення чутливості пташки та руху слайдера
+        pygame.draw.rect(window, (192, 192, 192), (100, 200, 500, 50))  # Сірий фон для слайдера
+        pygame.draw.rect(window, (0, 0, 0), (100 + player.sensitivity * 5, 200, 10, 50))  # Чорний слайдер
+        display_text("Чутливість пташки:", (20, 210), font, (255, 255, 255))
+        display_text(str(player.sensitivity) + "%", (630, 210), font, (255, 255, 255))
+
+        # Перевірка натискання мишею на текст "Чутливість пташки"
+        mouse_pos = pygame.mouse.get_pos()
+        if 100 <= mouse_pos[0] <= 600 and 200 <= mouse_pos[1] <= 250:
+            if pygame.mouse.get_pressed()[0]:
+                player.sensitivity = (mouse_pos[0] - 100) // 5
+
     else:
         for pipe_top, pipe_bottom, pipe_top_rect, pipe_bottom_rect in pipes:
             window.blit(pipe_top, (pipe_top_rect.x, pipe_top_rect.y))
@@ -229,8 +236,11 @@ while play:
             pipes = [pipe_pair for pipe_pair in pipes if pipe_pair[2].right > 0]
 
         player.update_animation(sy)
-
     pygame.display.update()  
     clock.tick(FPS)
-
 pygame.quit()
+
+
+
+
+
