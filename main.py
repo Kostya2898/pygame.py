@@ -13,7 +13,7 @@ class Player():
         self.rect.y = y
         self.width = width
         self.height = height
-        self.lives = 3  # Starting with 3 lives
+        self.lives = 1  # Starting with 1 life
         self.rotation_angle = 0
         self.sensitivity = 50
 
@@ -48,7 +48,7 @@ clock = pygame.time.Clock()
 font = pygame.font.Font(None, 36)
 
 text_lives_position = (10, 10)
-player_lives = 3
+player_lives = 1  # Display 1 life
 
 text_score_position = (10, 560)
 score = 0
@@ -85,7 +85,7 @@ def create_pipe():
     pipe_top_rect = pipe_top_image.get_rect(topleft=(WIDTH, 0))
     pipe_bottom_rect = pipe_bottom_image.get_rect(topleft=(WIDTH, pipe_top_height + gap))
 
-    return pipe_top_image, pipe_bottom_image, pipe_top_rect, pipe_bottom_rect
+    return pipe_top_image, pipe_bottom_image, pipe_top_rect, pipe_bottom_rect, False
 
 pygame.mixer.music.load('music.mp3')
 pygame.mixer.music.play(-1)
@@ -179,7 +179,7 @@ while play:
         # Відображення чутливості пташки та руху слайдера
         pygame.draw.rect(window, (192, 192, 192), (100, 250, 500, 50))  # Сірий фон для слайдера
         pygame.draw.rect(window, (0, 0, 0), (100 + player.sensitivity * 5, 250, 10, 50))  # Чорний слайдер
-        display_text("Чутливість пташки:", (20, 260), font, (0, 0, 0))
+        display_text(" ", (20, 260), font, (0, 0, 0))
         display_text(str(player.sensitivity) + "%", (630, 260), font, (0, 0, 0))
 
         # Перевірка натискання мишею на текст "Чутливість пташки"
@@ -189,7 +189,7 @@ while play:
                 player.sensitivity = (mouse_pos[0] - 100) // 5
 
     else:
-        for pipe_top, pipe_bottom, pipe_top_rect, pipe_bottom_rect in pipes:
+        for pipe_top, pipe_bottom, pipe_top_rect, pipe_bottom_rect, pipe_passed in pipes:
             window.blit(pipe_top, (pipe_top_rect.x, pipe_top_rect.y))
             window.blit(pipe_bottom, (pipe_bottom_rect.x, pipe_bottom_rect.y))
 
@@ -213,16 +213,16 @@ while play:
             timer += 1
             if timer >= 100:
                 timer = 0
-                pipe_top_image, pipe_bottom_image, pipe_top_rect, pipe_bottom_rect = create_pipe()
-                pipes.append((pipe_top_image, pipe_bottom_image, pipe_top_rect, pipe_bottom_rect))
+                pipe_top_image, pipe_bottom_image, pipe_top_rect, pipe_bottom_rect, pipe_passed = create_pipe()
+                pipes.append((pipe_top_image, pipe_bottom_image, pipe_top_rect, pipe_bottom_rect, pipe_passed))
 
-        for pipe_top, pipe_bottom, pipe_top_rect, pipe_bottom_rect in pipes:
+        for i, (pipe_top, pipe_bottom, pipe_top_rect, pipe_bottom_rect, pipe_passed) in enumerate(pipes):
             pipe_top_rect.x -= 2
             pipe_bottom_rect.x -= 2
 
             if pipe_top_rect.x <= -50:
                 passed_pipes.append((pipe_top, pipe_bottom, pipe_top_rect, pipe_bottom_rect))
-                pipes.remove((pipe_top, pipe_bottom, pipe_top_rect, pipe_bottom_rect))
+                pipes.pop(i)
 
                 continue
 
@@ -238,7 +238,7 @@ while play:
                     state = 'menu'  # Change game state to menu
                     pipes.clear()
                     passed_pipes.clear()
-                    player.lives = 3
+                    player.lives = 1
                     score = 0
                     timer = 10
                     sy = 0
@@ -249,8 +249,9 @@ while play:
                 py = HEIGHT // 2
 
             # Increase score when player passes through pipes
-            if pipe_top_rect.x == player.rect.x:
+            if pipe_top_rect.right < player.rect.left and not pipe_passed:
                 score += 1
+                pipes[i] = (pipe_top, pipe_bottom, pipe_top_rect, pipe_bottom_rect, True)
 
         for passed_pipe in passed_pipes:
             window.blit(passed_pipe[0], (passed_pipe[2].x, passed_pipe[2].y))
@@ -266,7 +267,7 @@ while play:
                 state = 'menu'
                 pipes.clear()
                 passed_pipes.clear()
-                player.lives = 3
+                player.lives = 1
                 score = 0
                 timer = 10
                 sy = 0
@@ -281,6 +282,3 @@ while play:
     pygame.display.flip()
 
 pygame.quit()
-
-
-
